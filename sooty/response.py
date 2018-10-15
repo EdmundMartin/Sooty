@@ -1,0 +1,26 @@
+from sooty.exceptions import RequestException
+
+
+class Response:
+
+    def __init__(self, requested_url: str, url: str, html: str, status_code: int, headers: dict):
+        self.url = url
+        self.requested_url = requested_url
+        self.html = html
+        self.status = status_code
+        self.headers = headers
+
+    @property
+    def status_ok(self) -> bool:
+        return self.status < 300
+
+    @property
+    def is_redirect(self) -> bool:
+        return self.requested_url != self.url
+
+    def raise_for_status(self) -> None:
+        if self.status not in [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]:
+            raise RequestException("Did not receive a 2XX Code")
+
+    def __repr__(self):
+        return 'Response(url={}, status_code={})'.format(self.url, self.status)
