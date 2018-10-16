@@ -9,3 +9,7 @@ class TimeoutException(Exception):
 
 class ContextError(Exception):
     pass
+
+
+class UnreachableElement(Exception):
+    pass

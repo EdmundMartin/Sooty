@@ -1,6 +1,6 @@
 import asyncio
 
-from sooty.sooty import Sooty
+from sooty import Sooty
 
 
 async def main():
@@ -9,8 +9,8 @@ async def main():
     print(resp)
     h1 = await browser.get_element('h1')
     print(h1)
-    resp = await browser.get_request('http://edmundmartin.com/wp-login.php?redirect_to=http%3A%2F%2Fedmundmartin.com%2Fwp-admin%2F&reauth=1')
-    await browser.fill_form_element_by_css('input', 'eddie', 0)
+    resp = await browser.get_request('http://edmundmartin.com/wp-login.php')
+    await browser.fill_form_element_by_css('input', 'NotMyUserName', 0)
     await asyncio.sleep(30)
 
 

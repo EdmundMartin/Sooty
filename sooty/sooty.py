@@ -12,7 +12,7 @@ from pyppeteer.errors import PageError
 
 from sooty.helpers import get_best_event_loop
 from sooty.response import Response
-from sooty.exceptions import TimeoutException, ContextError
+from sooty.exceptions import TimeoutException, ContextError, UnreachableElement
 
 
 class Sooty:
@@ -54,7 +54,7 @@ class Sooty:
         await self._create_browser()
         return self
 
-    async def get_request(self, url: str, timeout: int = 30) -> Response:
+    async def get_request(self, url: str, timeout: int = 30, post_load_wait: int = 0) -> Response:
         page = await self._get_page()
         async with async_timeout.timeout(timeout):
             try:
@@ -62,6 +62,8 @@ class Sooty:
             except TimeoutError:
                 raise TimeoutException("Request took longer than timeout: {}".format(timeout))
         page_content = await self._page.content()
+        if post_load_wait > 0:
+            await asyncio.sleep(post_load_wait)
         return Response(url, response.url, page_content, response.status, response.headers)
 
     async def get_element(self, selector: str, method: str = 'outerHTML') -> str:
@@ -80,9 +82,9 @@ class Sooty:
             raise ContextError("Get element requires a page as a context")
         found_elements = []
         try:
-            elements = await self.page.querySelectorAll(selector)
+            elements = await self._page.querySelectorAll(selector)
             for el in elements:
-                element = await self.page.evaluate('(el) => el.{}'.format(method), el)
+                element = await self._page.evaluate('(el) => el.{}'.format(method), el)
                 found_elements.append(element)
         except Exception as e:
             raise e
@@ -112,3 +114,11 @@ class Sooty:
         form_css_element[{}].value='{}';
         """.format(element, element_number, value)
         await self.evaluate_javascript(script)
+
+    async def click_element(self, selector: str):
+        if not self._page:
+            raise ContextError('Cannot click element without a page context')
+        try:
+            self._page.click(selector)
+        except Exception:
+            raise UnreachableElement('Unable to click element')
