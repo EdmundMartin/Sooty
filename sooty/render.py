@@ -15,7 +15,7 @@ from sooty.response import Response
 
 class SootyRender:
 
-    def __init__(self, headless=True, loop=None, proxy=None, auth=None):
+    def __init__(self, headless=True, loop=None, proxy=None, auth=None, tabs=3):
         if not loop:
             self.loop = asyncio.get_event_loop()
         else:
@@ -25,6 +25,8 @@ class SootyRender:
         self._auth = auth
         self._browser: Union[None, Browser] = None
         self._page_queue = asyncio.Queue()
+        self._tabs = tabs
+        self._semaphore = asyncio.BoundedSemaphore(1)
 
     async def _create_browser(self) -> None:
         if self._proxy:
@@ -46,11 +48,18 @@ class SootyRender:
         await self._create_pages(coroutines)
         return self
 
+    async def __check_browser_created(self):
+        async with self._semaphore:
+            if self._browser is None:
+                await self._create_browser()
+                await self._create_pages(self._tabs)
+
     async def get_request(self, url: str, timeout: int = 30, post_load_wait: int = 0) -> Response:
+        await self.__check_browser_created()
         page_retrieved = False
+        page = await self._page_queue.get()
         async with async_timeout.timeout(timeout):
             try:
-                page = await self._page_queue.get()
                 page_retrieved = True
                 response = await page.goto(url)
             except TimeoutError:
@@ -63,3 +72,7 @@ class SootyRender:
             finally:
                 if page_retrieved:
                     self._page_queue.put_nowait(page)
+
+    async def close(self):
+        if self._browser:
+            await self._browser.close()
