@@ -9,7 +9,7 @@ from pyppeteer.browser import Browser
 from pyppeteer.page import Page
 from pyppeteer.errors import PageError
 
-from sooty.exceptions import TimeoutException
+from sooty.exceptions import TimeoutException, PageException
 from sooty.response import Response
 
 
@@ -62,12 +62,16 @@ class SootyRender:
             try:
                 page_retrieved = True
                 response = await page.goto(url)
-            except TimeoutError:
-                raise TimeoutException("Request took longer than timeout: {}".format(timeout))
-            else:
                 if post_load_wait > 0:
                     await asyncio.sleep(post_load_wait)
                 page_content = await page.content()
+            except TimeoutError:
+                raise TimeoutException("Request took longer than timeout: {}".format(timeout))
+            except PageError:
+                raise PageException('Page threw an exception when navigating to URL')
+            except Exception:
+                raise PageException('Page threw an exception when navigating to URL')
+            else:
                 return Response(url, response.url, page_content, response.status, response.headers)
             finally:
                 if page_retrieved:

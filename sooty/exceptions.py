@@ -3,6 +3,10 @@ class RequestException(Exception):
     pass
 
 
+class PageException(Exception):
+    pass
+
+
 class TimeoutException(Exception):
     pass
 
