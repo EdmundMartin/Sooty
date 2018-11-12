@@ -1,6 +1,9 @@
 import asyncio
+from typing import List
+
 
 from sooty.sooty import Sooty
+from sooty.response import Response
 
 
 class SyncSooty:
@@ -27,20 +30,29 @@ class SyncSooty:
         self.loop.run_until_complete(future)
         return
 
-    def get_page(self, *args, **kwargs):
-        future = asyncio.Task(self.__handle_exception(self.__sooty.get_request, *args, **kwargs))
+    def get_request(self, url: str, timeout: int = 30, post_load_wait: int = 0) -> Response:
+        fake_kwargs = {'timeout': timeout, 'post_load_wait': post_load_wait}
+        future = asyncio.Task(self.__handle_exception(self.__sooty.get_request, url, **fake_kwargs))
         self.loop.run_until_complete(future)
         return future.result()
 
-    def get_element(self, *args, **kwargs):
-        future = asyncio.Task(self.__handle_exception(self.__sooty.get_element, *args, **kwargs))
+    def get_element(self, selector: str, method: str = 'outerHTML') -> str:
+        fake_kwargs = {'method': method}
+        future = asyncio.Task(self.__handle_exception(self.__sooty.get_element, selector, **fake_kwargs))
         self.loop.run_until_complete(future)
         return future.result()
 
-    def get_elements(self, *args, **kwargs):
-        future = asyncio.Task(self.__handle_exception(self.__sooty.get_elements, *args, **kwargs))
+    def get_elements(self, selector: str, method: str = 'outerHTML') -> List[str]:
+        fake_kwargs = {'method': method}
+        future = asyncio.Task(self.__handle_exception(self.__sooty.get_elements, selector, **fake_kwargs))
         self.loop.run_until_complete(future)
         return future.result()
+
+    def close_browser(self) -> None:
+        future = asyncio.Task(self.__handle_exception(self.__sooty.close_browser))
+        self.loop.run_until_complete(future)
+        return future.result()
+
 
 if __name__ == '__main__':
     sooty = SyncSooty(headless=False)

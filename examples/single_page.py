@@ -11,7 +11,8 @@ async def main():
     print(h1)
     resp = await browser.get_request('http://edmundmartin.com/wp-login.php')
     await browser.fill_form_element_by_css('input', 'NotMyUserName', 0)
-    await asyncio.sleep(30)
+    await asyncio.sleep(10)
+    await browser.close_browser()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Union, Any, List
 
 
@@ -61,10 +60,20 @@ class Sooty:
                 response = await page.goto(url)
             except TimeoutError:
                 raise TimeoutException("Request took longer than timeout: {}".format(timeout))
-        page_content = await self._page.content()
         if post_load_wait > 0:
             await asyncio.sleep(post_load_wait)
+        page_content = await self._page.content()
         return Response(url, response.url, page_content, response.status, response.headers)
+
+    async def take_screenshot(self, url: str, path: str, timeout: int = 30, post_load_wait: int = 0) -> None:
+        page = await self._get_page()
+        async with async_timeout.timeout(timeout):
+            try:
+                await page.goto(url)
+            except TimeoutError:
+                raise TimeoutException("Request took longer than timeout: {}".format(timeout))
+        await page.screenshot({'path': path})
+        return
 
     async def get_element(self, selector: str, method: str = 'outerHTML') -> str:
         if not self._page:
@@ -122,3 +131,6 @@ class Sooty:
             self._page.click(selector)
         except Exception:
             raise UnreachableElement('Unable to click element')
+
+    async def close_browser(self) -> None:
+        await self._browser.close()
