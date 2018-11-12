@@ -7,7 +7,7 @@ class SyncSooty:
 
     def __init__(self, headless=True, proxy=None, auth=None):
         self.loop = asyncio.get_event_loop()
-        self.__sooty = Sooty(headless=headless, loop=None, proxy=None, auth=None)
+        self.__sooty = Sooty(headless=headless, proxy=None, auth=None)
 
     async def __handle_exception(self, func, *args, **kwargs):
         try:
